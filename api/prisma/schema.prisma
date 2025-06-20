@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TransactionType {
+  income
+  expense
+}
+
+enum TransactionCategory {
+  salary
+  investment
+  other_income
+  food
+  transportation
+  utilities
+  entertainment
+  shopping
+  healthcare
+  other_expense
+}
+
+enum FocusType {
+  focus
+  break
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  title       String       @db.VarChar(100)
+  description String?      @db.Text
+  dueDate     DateTime?
+  priority    TaskPriority
+  status      TaskStatus
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("tasks")
+}
+
+model Inventory {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(100)
+  description String?  @db.VarChar(500)
+  quantity    Int      @default(0)
+  minQuantity Int      @default(0)
+  price       Float    @default(0)
+  category    String   @db.VarChar(50)
+  location    String   @db.VarChar(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("inventory")
+}
+
+model Transaction {
+  id          String              @id @default(uuid())
+  type        TransactionType
+  amount      Float
+  category    TransactionCategory
+  description String?             @db.Text
+  date        DateTime
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@map("transactions")
+}
+
+model FocusSession {
+  id        String    @id @default(uuid())
+  duration  Int // in minutes
+  startTime DateTime
+  endTime   DateTime?
+  type      FocusType
+  completed Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("focus_sessions")
+}
