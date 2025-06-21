@@ -171,7 +171,7 @@ export default function TaskManager() {
                         description: selectedTask.description,
                         status: selectedTask.status,
                         priority: selectedTask.priority,
-                        dueDate: selectedTask.dueDate?.toISOString().slice(0, 16),
+                        dueDate: selectedTask.dueDate,
                       }
                     : undefined
                 }
@@ -234,7 +234,7 @@ export default function TaskManager() {
                 </span>
                 {task.dueDate && (
                   <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800">
-                    Due: {task.dueDate.toLocaleDateString(undefined, { 
+                    Due: {new Date(task.dueDate).toLocaleDateString(undefined, { 
                       year: 'numeric', 
                       month: 'short', 
                       day: 'numeric',

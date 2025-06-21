@@ -1,5 +1,14 @@
 import { useState } from 'react'
 import { Button } from './ui/button'
+import { Input } from './ui/input'
+import { Label } from './ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select"
 import { createTaskSchema, type CreateTask, type UpdateTask } from '../lib/schemas'
 
 interface TaskFormProps {
@@ -61,10 +70,8 @@ export function TaskForm({ onSubmit, initialData, onCancel, mode = 'create' }: T
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="title" className="block text-sm font-medium mb-1 text-foreground">
-          Title
-        </label>
-        <input
+        <Label htmlFor="title">Title</Label>
+        <Input
           type="text"
           id="title"
           name="title"
@@ -79,9 +86,7 @@ export function TaskForm({ onSubmit, initialData, onCancel, mode = 'create' }: T
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium mb-1 text-foreground">
-          Description
-        </label>
+        <Label htmlFor="description">Description</Label>
         <textarea
           id="description"
           name="description"
@@ -97,54 +102,62 @@ export function TaskForm({ onSubmit, initialData, onCancel, mode = 'create' }: T
       </div>
 
       <div>
-        <label htmlFor="status" className="block text-sm font-medium mb-1 text-foreground">
-          Status
-        </label>
-        <select
-          id="status"
-          name="status"
+        <Label htmlFor="status">Status</Label>
+        <Select
           value={formData.status ?? 'TODO'}
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md bg-background text-foreground border-input focus:outline-none focus:ring-2 focus:ring-ring"
+          onValueChange={(value: "TODO" | "IN_PROGRESS" | "DONE") => {
+            setFormData((prev) => ({
+              ...prev,
+              status: value
+            }));
+          }}
         >
-          <option value="TODO">To Do</option>
-          <option value="IN_PROGRESS">In Progress</option>
-          <option value="DONE">Done</option>
-        </select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="TODO">To Do</SelectItem>
+            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+            <SelectItem value="DONE">Done</SelectItem>
+          </SelectContent>
+        </Select>
         {errors.status && (
           <p className="text-destructive text-sm mt-1">{errors.status}</p>
         )}
       </div>
 
       <div>
-        <label htmlFor="priority" className="block text-sm font-medium mb-1 text-foreground">
-          Priority
-        </label>
-        <select
-          id="priority"
-          name="priority"
+        <Label htmlFor="priority">Priority</Label>
+        <Select
           value={formData.priority ?? 'MEDIUM'}
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md bg-background text-foreground border-input focus:outline-none focus:ring-2 focus:ring-ring"
+          onValueChange={(value: "LOW" | "MEDIUM" | "HIGH") => {
+            setFormData((prev) => ({
+              ...prev,
+              priority: value
+            }));
+          }}
         >
-          <option value="LOW">Low</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="HIGH">High</option>
-        </select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="LOW">Low</SelectItem>
+            <SelectItem value="MEDIUM">Medium</SelectItem>
+            <SelectItem value="HIGH">High</SelectItem>
+          </SelectContent>
+        </Select>
         {errors.priority && (
           <p className="text-destructive text-sm mt-1">{errors.priority}</p>
         )}
       </div>
 
       <div>
-        <label htmlFor="dueDate" className="block text-sm font-medium mb-1 text-foreground">
-          Due Date
-        </label>
+        <Label htmlFor="dueDate">Due Date</Label>
         <input
           type="datetime-local"
           id="dueDate"
           name="dueDate"
-          value={formData.dueDate ?? ''}
+          value={formData.dueDate ? formData.dueDate.slice(0, 16) : ''}
           onChange={handleChange}
           className="w-full p-2 border rounded-md bg-background text-foreground border-input focus:outline-none focus:ring-2 focus:ring-ring"
         />

@@ -13,10 +13,27 @@ import {
   focusSchema,
   createFocusSchema,
   updateFocusSchema,
+  Task,
+  CreateTask,
+  UpdateTask,
+  Inventory,
+  CreateInventory,
+  UpdateInventory,
+  FocusSession,
+  CreateFocusSession,
+  UpdateFocusSession,
+  FocusStats,
+  Transaction,
+  CreateTransaction,
+  UpdateTransaction,
+  FinanceStats,
+  FocusPreset,
+  CreateFocusPreset,
+  UpdateFocusPreset
 } from './schemas'
 
 export const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: 'http://localhost:3001/api',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -44,109 +61,52 @@ api.interceptors.response.use(
 )
 
 // Task API
-export const taskApi = {
-  getAll: async () => {
-    const response = await api.get('/tasks')
-    return taskSchema.array().parse(response.data)
-  },
-
-  getById: async (id: string) => {
-    const response = await api.get(`/tasks/${id}`)
-    return taskSchema.parse(response.data)
-  },
-
-  create: async (data: z.infer<typeof createTaskSchema>) => {
-    const response = await api.post('/tasks', data)
-    return taskSchema.parse(response.data)
-  },
-
-  update: async (id: string, data: z.infer<typeof updateTaskSchema>) => {
-    const response = await api.patch(`/tasks/${id}`, data)
-    return taskSchema.parse(response.data)
-  },
-
-  delete: async (id: string) => {
-    await api.delete(`/tasks/${id}`)
-  },
+export const TaskAPI = {
+  getAll: () => api.get<Task[]>('/tasks').then(res => res.data),
+  getById: (id: string) => api.get<Task>(`/tasks/${id}`).then(res => res.data),
+  create: (task: CreateTask) => api.post<Task>('/tasks', task).then(res => res.data),
+  update: (id: string, task: UpdateTask) => api.put<Task>(`/tasks/${id}`, task).then(res => res.data),
+  delete: (id: string) => api.delete(`/tasks/${id}`).then(res => res.data)
 }
 
 // Inventory API
-export const inventoryApi = {
-  getAll: async () => {
-    const response = await api.get('/inventory')
-    return inventorySchema.array().parse(response.data)
-  },
-
-  getById: async (id: string) => {
-    const response = await api.get(`/inventory/${id}`)
-    return inventorySchema.parse(response.data)
-  },
-
-  create: async (data: z.infer<typeof createInventorySchema>) => {
-    const response = await api.post('/inventory', data)
-    return inventorySchema.parse(response.data)
-  },
-
-  update: async (id: string, data: z.infer<typeof updateInventorySchema>) => {
-    const response = await api.patch(`/inventory/${id}`, data)
-    return inventorySchema.parse(response.data)
-  },
-
-  delete: async (id: string) => {
-    await api.delete(`/inventory/${id}`)
-  },
+export const InventoryAPI = {
+  getAll: () => api.get<Inventory[]>('/inventory').then(res => res.data),
+  getById: (id: string) => api.get<Inventory>(`/inventory/${id}`).then(res => res.data),
+  create: (item: CreateInventory) => api.post<Inventory>('/inventory', item).then(res => res.data),
+  update: (id: string, item: UpdateInventory) => api.put<Inventory>(`/inventory/${id}`, item).then(res => res.data),
+  delete: (id: string) => api.delete(`/inventory/${id}`).then(res => res.data)
 }
 
 // Finance API
-export const financeApi = {
-  getAll: async () => {
-    const response = await api.get('/finances')
-    return financeSchema.array().parse(response.data)
-  },
-
-  getById: async (id: string) => {
-    const response = await api.get(`/finances/${id}`)
-    return financeSchema.parse(response.data)
-  },
-
-  create: async (data: z.infer<typeof createFinanceSchema>) => {
-    const response = await api.post('/finances', data)
-    return financeSchema.parse(response.data)
-  },
-
-  update: async (id: string, data: z.infer<typeof updateFinanceSchema>) => {
-    const response = await api.patch(`/finances/${id}`, data)
-    return financeSchema.parse(response.data)
-  },
-
-  delete: async (id: string) => {
-    await api.delete(`/finances/${id}`)
-  },
+export const FinanceAPI = {
+  getAll: () => api.get<Transaction[]>('/finance').then(res => res.data),
+  getById: (id: string) => api.get<Transaction>(`/finance/${id}`).then(res => res.data),
+  create: (transaction: CreateTransaction) => api.post<Transaction>('/finance', transaction).then(res => res.data),
+  update: (id: string, transaction: UpdateTransaction) => api.put<Transaction>(`/finance/${id}`, transaction).then(res => res.data),
+  delete: (id: string) => api.delete(`/finance/${id}`).then(res => res.data),
+  getStats: (startDate: Date, endDate: Date) => api.post<FinanceStats>('/finance/stats', {
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString()
+  }).then(res => res.data)
 }
 
 // Focus API
-export const focusApi = {
-  getAll: async () => {
-    const response = await api.get('/focus')
-    return focusSchema.array().parse(response.data)
-  },
-
-  getById: async (id: string) => {
-    const response = await api.get(`/focus/${id}`)
-    return focusSchema.parse(response.data)
-  },
-
-  create: async (data: z.infer<typeof createFocusSchema>) => {
-    const response = await api.post('/focus', data)
-    return focusSchema.parse(response.data)
-  },
-
-  update: async (id: string, data: z.infer<typeof updateFocusSchema>) => {
-    const response = await api.patch(`/focus/${id}`, data)
-    return focusSchema.parse(response.data)
-  },
-
-  delete: async (id: string) => {
-    await api.delete(`/focus/${id}`)
-  },
+export const FocusAPI = {
+  getAll: () => api.get<FocusSession[]>('/focus').then(res => res.data),
+  getById: (id: string) => api.get<FocusSession>(`/focus/${id}`).then(res => res.data),
+  create: (session: CreateFocusSession) => api.post<FocusSession>('/focus', session).then(res => res.data),
+  update: (id: string, session: UpdateFocusSession) => api.put<FocusSession>(`/focus/${id}`, session).then(res => res.data),
+  delete: (id: string) => api.delete(`/focus/${id}`).then(res => res.data),
+  complete: (id: string) => api.post<FocusSession>(`/focus/${id}/complete`).then(res => res.data),
+  getStats: (startDate: Date, endDate: Date) => api.post<FocusStats>('/focus/stats', {
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString()
+  }).then(res => res.data),
+  // Preset methods
+  getAllPresets: () => api.get<FocusPreset[]>('/focus/presets').then(res => res.data),
+  getPresetById: (id: string) => api.get<FocusPreset>(`/focus/presets/${id}`).then(res => res.data),
+  createPreset: (preset: CreateFocusPreset) => api.post<FocusPreset>('/focus/presets', preset).then(res => res.data),
+  updatePreset: (id: string, preset: UpdateFocusPreset) => api.put<FocusPreset>(`/focus/presets/${id}`, preset).then(res => res.data),
+  deletePreset: (id: string) => api.delete(`/focus/presets/${id}`).then(res => res.data)
 } 

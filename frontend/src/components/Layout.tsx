@@ -8,7 +8,8 @@ import {
   Sun,
   Moon,
   User,
-  Boxes
+  Boxes,
+  ListTodo
 } from 'lucide-react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
@@ -19,6 +20,7 @@ import { useInventoryStore } from '../store/useInventoryStore'
 import { useFinanceStore } from '../store/useFinanceStore'
 import NotificationCenter from './NotificationCenter'
 import { useEffect } from 'react'
+import { FocusTimer } from './FocusTimer'
 
 export default function Layout() {
   const { theme, setTheme } = useTheme()
@@ -44,13 +46,15 @@ export default function Layout() {
       setTaskSearch(value)
     } else if (path.includes('/inventory')) {
       setInventorySearch(value)
-    } else if (path.includes('/finances')) {
+    } else if (path.includes('/finance')) {
       setFinanceSearch(value)
     }
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
+      <NotificationCenter />
+      <FocusTimer />
       {/* Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-20 w-60 border-r bg-card">
         <div className="flex h-16 items-center border-b px-6">
@@ -75,7 +79,7 @@ export default function Layout() {
             to="/tasks"
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
           >
-            <Clock className="h-5 w-5" />
+            <ListTodo className="h-5 w-5" />
             <span className="font-medium">Tasks</span>
           </Link>
           <Link
@@ -93,7 +97,7 @@ export default function Layout() {
             <span className="font-medium">Inventory</span>
           </Link>
           <Link
-            to="/finances"
+            to="/finance"
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
           >
             <Wallet className="h-5 w-5" />

@@ -21,7 +21,7 @@ function App() {
             <Route path="tasks" element={<TaskManager />} />
             <Route path="kanban" element={<TaskKanban />} />
             <Route path="focus" element={<FocusTime />} />
-            <Route path="finances" element={<FinancialManagement />} />
+            <Route path="finance" element={<FinancialManagement />} />
             <Route path="inventory" element={<InventoryManagement />} />
           </Route>
         </Routes>

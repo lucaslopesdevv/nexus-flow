@@ -6,11 +6,11 @@ config()
 
 // Define environment schema
 const envSchema = z.object({
-  PORT: z.string().transform(Number).optional().default('3000'),
+  PORT: z.string().transform(Number).optional().default('3001'),
   HOST: z.string().optional().default('0.0.0.0'),
   DATABASE_URL: z.string(),
-  JWT_SECRET: z.string(),
-  CORS_ORIGINS: z.string().transform(origins => origins.split(','))
+  JWT_SECRET: z.string().optional().default('your-secret-key'),
+  CORS_ORIGINS: z.string().transform(origins => origins.split(',')).optional().default('http://localhost:5173')
 })
 
 // Parse and validate environment variables

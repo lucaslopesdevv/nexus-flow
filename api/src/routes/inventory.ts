@@ -1,85 +1,104 @@
 import { FastifyInstance } from 'fastify'
-import { InventoryService } from '../services/inventory.service'
-import { z } from 'zod'
+import { Type } from '@sinclair/typebox'
+import { InventoryService } from '@/services/inventory.service'
 
-const inventorySchema = z.object({
-  name: z.string().min(1).max(100),
-  description: z.string().max(500).optional(),
-  quantity: z.number().int().min(0),
-  minQuantity: z.number().int().min(0),
-  price: z.number().min(0),
-  category: z.string().min(1).max(50),
-  location: z.string().max(100)
+const inventoryService = new InventoryService()
+
+const InventorySchema = Type.Object({
+  name: Type.String(),
+  description: Type.Optional(Type.String()),
+  quantity: Type.Number(),
+  minQuantity: Type.Number(),
+  price: Type.Number(),
+  category: Type.String(),
+  location: Type.String()
 })
 
-export async function inventoryRoutes(app: FastifyInstance) {
-  const inventoryService = new InventoryService()
-
+export const inventoryRoutes = async function(app: FastifyInstance) {
+  // Get all inventory items
   app.get('/', async () => {
     return await inventoryService.findAll()
   })
 
-  app.get('/:id', async (request) => {
+  // Get inventory item by id
+  app.get('/:id', {
+    schema: {
+      params: Type.Object({
+        id: Type.String()
+      })
+    }
+  }, async (request) => {
     const { id } = request.params as { id: string }
     return await inventoryService.findById(id)
   })
 
-  app.post('/', async (request, reply) => {
-    const data = inventorySchema.parse(request.body)
-    const item = await inventoryService.create(data)
-    return reply.status(201).send(item)
+  // Create inventory item
+  app.post('/', {
+    schema: {
+      body: InventorySchema
+    }
+  }, async (request) => {
+    return await inventoryService.create(request.body as any)
   })
 
-  app.patch('/:id', async (request) => {
+  // Update inventory item
+  app.put('/:id', {
+    schema: {
+      params: Type.Object({
+        id: Type.String()
+      }),
+      body: Type.Partial(InventorySchema)
+    }
+  }, async (request) => {
     const { id } = request.params as { id: string }
-    const data = inventorySchema.partial().parse(request.body)
-    return await inventoryService.update(id, data)
+    return await inventoryService.update(id, request.body as any)
   })
 
-  app.delete('/:id', async (request) => {
+  // Delete inventory item
+  app.delete('/:id', {
+    schema: {
+      params: Type.Object({
+        id: Type.String()
+      })
+    }
+  }, async (request) => {
     const { id } = request.params as { id: string }
     await inventoryService.delete(id)
     return { success: true }
   })
 
-  // Bulk Operations
-  app.post('/bulk', async (request, reply) => {
-    const data = z.array(z.object({
-      name: z.string().min(1).max(100),
-      description: z.string().max(500).optional(),
-      quantity: z.number().int().min(0),
-      minQuantity: z.number().int().min(0),
-      price: z.number().min(0),
-      category: z.string().min(1).max(50),
-      location: z.string().max(100)
-    })).parse(request.body)
-    const items = await inventoryService.bulkCreate(data)
-    return reply.status(201).send(items)
+  // Bulk operations
+  app.post('/bulk', {
+    schema: {
+      body: Type.Object({
+        items: Type.Array(InventorySchema)
+      })
+    }
+  }, async (request) => {
+    const { items } = request.body as { items: any[] }
+    return await inventoryService.bulkCreate(items)
   })
 
-  app.patch('/bulk', async (request) => {
-    const schema = z.array(z.object({
-      id: z.string(),
-      data: z.object({
-        name: z.string().min(1).max(100).optional(),
-        description: z.string().max(500).optional(),
-        quantity: z.number().int().min(0).optional(),
-        minQuantity: z.number().int().min(0).optional(),
-        price: z.number().min(0).optional(),
-        category: z.string().min(1).max(50).optional(),
-        location: z.string().max(100).optional()
-      })
-    }))
-    const updates = schema.parse(request.body)
+  app.put('/bulk', {
+    schema: {
+      body: Type.Array(Type.Object({
+        id: Type.String(),
+        data: Type.Partial(InventorySchema)
+      }))
+    }
+  }, async (request) => {
+    const updates = request.body as Array<{ id: string, data: any }>
     return await inventoryService.bulkUpdate(updates)
   })
 
-  app.delete('/bulk', async (request) => {
-    const schema = z.object({
-      ids: z.array(z.string())
-    })
-    const { ids } = schema.parse(request.body)
-    await inventoryService.bulkDelete(ids)
-    return { success: true }
+  app.delete('/bulk', {
+    schema: {
+      body: Type.Object({
+        ids: Type.Array(Type.String())
+      })
+    }
+  }, async (request) => {
+    const { ids } = request.body as { ids: string[] }
+    return await inventoryService.bulkDelete(ids)
   })
 } 

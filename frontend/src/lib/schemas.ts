@@ -7,17 +7,15 @@ export const taskSchema = z.object({
   description: z.string().max(500).optional(),
   status: z.enum(['TODO', 'IN_PROGRESS', 'DONE']),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH']),
-  dueDate: z.string().datetime().optional().transform((val) => val ? new Date(val) : null),
-  createdAt: z.string().datetime().transform((val) => new Date(val)),
-  updatedAt: z.string().datetime().transform((val) => new Date(val)),
+  dueDate: z.string().datetime().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
 })
 
 export const createTaskSchema = taskSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-}).extend({
-  dueDate: z.string().datetime().optional(),
 })
 
 export const updateTaskSchema = createTaskSchema.partial()
@@ -76,17 +74,15 @@ export const financeSchema = z.object({
     'other_expense',
   ]),
   description: z.string().max(500).optional(),
-  date: z.string().datetime().transform((val) => new Date(val)),
-  createdAt: z.string().datetime().transform((val) => new Date(val)),
-  updatedAt: z.string().datetime().transform((val) => new Date(val)),
+  date: z.string().datetime(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
 })
 
 export const createFinanceSchema = financeSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-}).extend({
-  date: z.date(),
 })
 
 export const updateFinanceSchema = createFinanceSchema.partial()
@@ -94,32 +90,42 @@ export const updateFinanceSchema = createFinanceSchema.partial()
 // Focus Schemas
 export const focusSchema = z.object({
   id: z.string().uuid(),
-  duration: z.number().int().min(1),
-  startTime: z.string().datetime().transform((val) => new Date(val)),
-  endTime: z.string().datetime().optional().transform((val) => val ? new Date(val) : null),
+  duration: z.number().int().positive(),
+  startTime: z.string().datetime(),
+  endTime: z.string().datetime().optional(),
   type: z.enum(['focus', 'break']),
-  completed: z.boolean().default(false),
-  createdAt: z.string().datetime().transform((val) => new Date(val)),
-  updatedAt: z.string().datetime().transform((val) => new Date(val)),
+  completed: z.boolean(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime()
 })
 
-export const createFocusSchema = focusSchema.omit({
-  id: true,
-  endTime: true,
-  completed: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  startTime: z.date(),
+export const createFocusSchema = z.object({
+  duration: z.number().int().positive(),
+  startTime: z.string().datetime(),
+  endTime: z.string().datetime().optional(),
+  type: z.enum(['focus', 'break'])
 })
 
-export const updateFocusSchema = focusSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  startTime: z.date().optional(),
+export const updateFocusSchema = createFocusSchema.partial()
+
+export const focusPresetSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  duration: z.number().int().positive(),
+  type: z.enum(['focus', 'break']),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime()
 })
+
+export const createFocusPresetSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  duration: z.number().int().positive(),
+  type: z.enum(['focus', 'break'])
+})
+
+export const updateFocusPresetSchema = createFocusPresetSchema.partial()
 
 // Types
 export type Task = z.infer<typeof taskSchema>
@@ -136,4 +142,108 @@ export type UpdateFinance = z.infer<typeof updateFinanceSchema>
 
 export type Focus = z.infer<typeof focusSchema>
 export type CreateFocus = z.infer<typeof createFocusSchema>
-export type UpdateFocus = z.infer<typeof updateFocusSchema> 
+export type UpdateFocus = z.infer<typeof updateFocusSchema>
+export type FocusPreset = z.infer<typeof focusPresetSchema>
+export type CreateFocusPreset = z.infer<typeof createFocusPresetSchema>
+export type UpdateFocusPreset = z.infer<typeof updateFocusPresetSchema>
+
+// Focus Time Types
+export type FocusType = 'focus' | 'break'
+
+export interface FocusSession {
+  id: string
+  duration: number
+  startTime: string
+  endTime?: string
+  type: FocusType
+  completed: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateFocusSession {
+  duration: number
+  startTime: string
+  endTime?: string
+  type: FocusType
+}
+
+export interface UpdateFocusSession {
+  duration?: number
+  startTime?: string
+  endTime?: string
+  type?: FocusType
+  completed?: boolean
+}
+
+export interface FocusStats {
+  totalSessions: number
+  totalFocusTime: number
+  totalBreakTime: number
+  completedSessions: number
+}
+
+// Finance Types
+export type TransactionType = 'income' | 'expense'
+
+export type TransactionCategory =
+  | 'salary'
+  | 'investment'
+  | 'other_income'
+  | 'food'
+  | 'transportation'
+  | 'utilities'
+  | 'entertainment'
+  | 'shopping'
+  | 'healthcare'
+  | 'other_expense'
+
+export interface Transaction {
+  id: string
+  type: TransactionType
+  amount: number
+  category: TransactionCategory
+  description?: string
+  date: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateTransaction {
+  type: TransactionType
+  amount: number
+  category: TransactionCategory
+  description?: string
+  date: string
+}
+
+export interface UpdateTransaction {
+  type?: TransactionType
+  amount?: number
+  category?: TransactionCategory
+  description?: string
+  date?: string
+}
+
+export interface FinanceStats {
+  totalIncome: number
+  totalExpenses: number
+  balance: number
+  byCategory: Record<TransactionCategory, number>
+}
+
+// Constants
+export const TRANSACTION_CATEGORIES: TransactionCategory[] = [
+  'salary',
+  'investment',
+  'other_income',
+  'food',
+  'transportation',
+  'utilities',
+  'entertainment',
+  'shopping',
+  'healthcare',
+  'other_expense'
+]
+
+export const FOCUS_TYPES: FocusType[] = ['focus', 'break'] 

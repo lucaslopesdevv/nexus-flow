@@ -102,3 +102,15 @@ model FocusSession {
 
   @@map("focus_sessions")
 }
+
+model FocusPreset {
+  id          String    @id @default(uuid())
+  name        String    @db.VarChar(100)
+  description String?   @db.Text
+  duration    Int // in minutes
+  type        FocusType
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("focus_presets")
+}

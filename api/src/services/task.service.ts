@@ -1,79 +1,88 @@
-import { prisma } from '../config/database'
-import type { Task, CreateTask, UpdateTask } from '../schemas/task.schema'
-import { AppError } from '../middleware/errorHandler'
+import { AppError } from '@/middleware/errorHandler'
+import { prisma } from '@/config/database'
+import { TaskPriority, TaskStatus } from '@prisma/client'
 
 export class TaskService {
-  async findAll(): Promise<Task[]> {
-    const tasks = await prisma.task.findMany()
-    return tasks.map(task => ({
-      ...task,
-      status: task.status as Task['status'],
-      priority: task.priority as Task['priority'],
-      createdAt: task.createdAt.toISOString(),
-      updatedAt: task.updatedAt.toISOString(),
-      dueDate: task.dueDate?.toISOString(),
-      description: task.description || undefined
-    }))
-  }
-
-  async findById(id: string): Promise<Task> {
-    const task = await prisma.task.findUnique({
-      where: { id }
-    })
-    if (!task) {
-      throw new AppError(404, 'Task not found', 'TASK_NOT_FOUND')
-    }
-    return {
-      ...task,
-      status: task.status as Task['status'],
-      priority: task.priority as Task['priority'],
-      createdAt: task.createdAt.toISOString(),
-      updatedAt: task.updatedAt.toISOString(),
-      dueDate: task.dueDate?.toISOString(),
-      description: task.description || undefined
+  async findAll() {
+    try {
+      return await prisma.task.findMany({
+        orderBy: { createdAt: 'desc' }
+      })
+    } catch (error) {
+      console.error('Error in findAll:', error)
+      throw new AppError(500, 'Failed to fetch tasks', 'FETCH_ERROR')
     }
   }
 
-  async create(data: CreateTask): Promise<Task> {
-    const task = await prisma.task.create({
-      data: {
-        ...data,
-        dueDate: data.dueDate ? new Date(data.dueDate) : null
+  async findById(id: string) {
+    try {
+      const task = await prisma.task.findUnique({
+        where: { id }
+      })
+      if (!task) {
+        throw new AppError(404, 'Task not found', 'NOT_FOUND')
       }
-    })
-    return {
-      ...task,
-      status: task.status as Task['status'],
-      priority: task.priority as Task['priority'],
-      createdAt: task.createdAt.toISOString(),
-      updatedAt: task.updatedAt.toISOString(),
-      dueDate: task.dueDate?.toISOString(),
-      description: task.description || undefined
+      return task
+    } catch (error) {
+      if (error instanceof AppError) throw error
+      console.error('Error in findById:', error)
+      throw new AppError(500, 'Failed to fetch task', 'FETCH_ERROR')
     }
   }
 
-  async update(id: string, data: UpdateTask): Promise<Task> {
-    const task = await prisma.task.update({
-      where: { id },
-      data: {
-        ...data,
-        dueDate: data.dueDate ? new Date(data.dueDate) : undefined
-      }
-    })
-    return {
-      ...task,
-      status: task.status as Task['status'],
-      priority: task.priority as Task['priority'],
-      createdAt: task.createdAt.toISOString(),
-      updatedAt: task.updatedAt.toISOString(),
-      dueDate: task.dueDate?.toISOString(),
-      description: task.description || undefined
+  async create(data: {
+    title: string
+    description?: string
+    dueDate?: string
+    priority: TaskPriority
+    status: TaskStatus
+  }) {
+    try {
+      return await prisma.task.create({
+        data: {
+          ...data,
+          dueDate: data.dueDate ? new Date(data.dueDate) : undefined
+        }
+      })
+    } catch (error) {
+      console.error('Error in create:', error)
+      throw new AppError(500, 'Failed to create task', 'CREATE_ERROR')
     }
   }
 
-  async delete(id: string): Promise<void> {
-    await prisma.task.delete({
-      where: { id }
-    })
+  async update(id: string, data: {
+    title?: string
+    description?: string
+    dueDate?: string
+    priority?: TaskPriority
+    status?: TaskStatus
+  }) {
+    try {
+      await this.findById(id)
+      return await prisma.task.update({
+        where: { id },
+        data: {
+          ...data,
+          dueDate: data.dueDate ? new Date(data.dueDate) : undefined
+        }
+      })
+    } catch (error) {
+      if (error instanceof AppError) throw error
+      console.error('Error in update:', error)
+      throw new AppError(500, 'Failed to update task', 'UPDATE_ERROR')
+    }
+  }
+
+  async delete(id: string) {
+    try {
+      await this.findById(id)
+      await prisma.task.delete({
+        where: { id }
+      })
+    } catch (error) {
+      if (error instanceof AppError) throw error
+      console.error('Error in delete:', error)
+      throw new AppError(500, 'Failed to delete task', 'DELETE_ERROR')
+    }
   }
 } 

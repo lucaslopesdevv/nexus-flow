@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import { financeApi } from '../lib/api'
-import type { Finance, CreateFinance, UpdateFinance } from '../lib/schemas'
+import { FinanceAPI } from '../lib/api'
+import type { Transaction, CreateTransaction, UpdateTransaction, FinanceStats } from '../lib/schemas'
 import { useNotificationStore } from './useNotificationStore'
 
 export type TransactionType = 'income' | 'expense'
@@ -16,30 +16,35 @@ export type TransactionCategory =
   | 'healthcare'
   | 'other_expense'
 
-export type Transaction = Finance
-
 interface FinanceStore {
-  transactions: Finance[]
-  filteredTransactions: Finance[]
+  transactions: Transaction[]
+  filteredTransactions: Transaction[]
   searchQuery: string
+  stats: FinanceStats | null
   isLoading: boolean
   error: string | null
   fetchTransactions: () => Promise<void>
-  createTransaction: (data: CreateFinance) => Promise<void>
-  updateTransaction: (id: string, data: UpdateFinance) => Promise<void>
+  createTransaction: (transaction: CreateTransaction) => Promise<void>
+  updateTransaction: (id: string, transaction: UpdateTransaction) => Promise<void>
   deleteTransaction: (id: string) => Promise<void>
+  fetchStats: (startDate: Date, endDate: Date) => Promise<void>
   getBalance: () => number
   getIncomeTotal: () => number
   getExpenseTotal: () => number
   setSearchQuery: (query: string) => void
 }
 
-export const useFinanceStore = create<FinanceStore>((set, get) => ({
+const initialState = {
   transactions: [],
   filteredTransactions: [],
   searchQuery: '',
+  stats: null,
   isLoading: false,
   error: null,
+}
+
+export const useFinanceStore = create<FinanceStore>((set, get) => ({
+  ...initialState,
 
   setSearchQuery: (query: string) => {
     const searchQuery = query.toLowerCase()
@@ -59,45 +64,74 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
   fetchTransactions: async () => {
     try {
       set({ isLoading: true, error: null })
-      const transactions = await financeApi.getAll()
-      set({ transactions, filteredTransactions: transactions, isLoading: false })
-      // Check for notifications after fetching transactions
-      useNotificationStore.getState().checkFinanceNotifications(transactions)
-    } catch (error: any) {
-      console.error('Error fetching transactions:', error)
+      const transactions = await FinanceAPI.getAll()
       set({ 
-        error: 'Failed to fetch transactions', 
+        transactions, 
+        filteredTransactions: transactions,
         isLoading: false,
-        transactions: []
+        error: null
+      })
+      // Check for notifications after fetching transactions
+      try {
+        useNotificationStore.getState().checkFinanceNotifications(transactions)
+      } catch (notificationError) {
+        console.error('Error checking finance notifications:', notificationError)
+      }
+    } catch (error: any) {
+      console.error('Error fetching transactions:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
+      set({ 
+        ...initialState,
+        error: `Failed to fetch transactions: ${error.response?.data?.message || error.message}`, 
+        isLoading: false,
       })
     }
   },
 
-  createTransaction: async (data) => {
+  createTransaction: async (transaction: CreateTransaction) => {
     try {
       set({ isLoading: true, error: null })
-      const newTransaction = await financeApi.create(data)
+      console.log('Creating transaction:', transaction)
+      const newTransaction = await FinanceAPI.create(transaction)
+      console.log('Transaction created:', newTransaction)
       set((state) => {
-        const transactions = [...state.transactions, newTransaction]
+        const transactions = [newTransaction, ...state.transactions]
         return {
           transactions,
           filteredTransactions: state.searchQuery ? state.filteredTransactions : transactions,
           isLoading: false,
+          error: null
         }
       })
       // Check for notifications after adding a transaction
-      useNotificationStore.getState().checkFinanceNotifications(get().transactions)
+      try {
+        useNotificationStore.getState().checkFinanceNotifications(get().transactions)
+      } catch (notificationError) {
+        console.error('Error checking finance notifications:', notificationError)
+      }
     } catch (error: any) {
-      console.error('Error creating transaction:', error)
-      set({ error: 'Failed to create transaction', isLoading: false })
+      console.error('Error creating transaction:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
+      set({ 
+        error: `Failed to create transaction: ${error.response?.data?.message || error.message}`, 
+        isLoading: false 
+      })
       throw error
     }
   },
 
-  updateTransaction: async (id, data) => {
+  updateTransaction: async (id: string, transaction: UpdateTransaction) => {
     try {
       set({ isLoading: true, error: null })
-      const updatedTransaction = await financeApi.update(id, data)
+      console.log('Updating transaction:', { id, transaction })
+      const updatedTransaction = await FinanceAPI.update(id, transaction)
+      console.log('Transaction updated:', updatedTransaction)
       set((state) => {
         const transactions = state.transactions.map((t) => 
           t.id === id ? updatedTransaction : t
@@ -105,32 +139,75 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
         const filteredTransactions = state.filteredTransactions.map((t) =>
           t.id === id ? updatedTransaction : t
         )
-        return { transactions, filteredTransactions, isLoading: false }
+        return { transactions, filteredTransactions, isLoading: false, error: null }
       })
       // Check for notifications after updating a transaction
-      useNotificationStore.getState().checkFinanceNotifications(get().transactions)
+      try {
+        useNotificationStore.getState().checkFinanceNotifications(get().transactions)
+      } catch (notificationError) {
+        console.error('Error checking finance notifications:', notificationError)
+      }
     } catch (error: any) {
-      console.error('Error updating transaction:', error)
-      set({ error: 'Failed to update transaction', isLoading: false })
+      console.error('Error updating transaction:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
+      set({ 
+        error: `Failed to update transaction: ${error.response?.data?.message || error.message}`, 
+        isLoading: false 
+      })
       throw error
     }
   },
 
-  deleteTransaction: async (id) => {
+  deleteTransaction: async (id: string) => {
     try {
       set({ isLoading: true, error: null })
-      await financeApi.delete(id)
+      console.log('Deleting transaction:', id)
+      await FinanceAPI.delete(id)
+      console.log('Transaction deleted:', id)
       set((state) => {
         const transactions = state.transactions.filter((t) => t.id !== id)
         const filteredTransactions = state.filteredTransactions.filter((t) => t.id !== id)
-        return { transactions, filteredTransactions, isLoading: false }
+        return { transactions, filteredTransactions, isLoading: false, error: null }
       })
       // Check for notifications after deleting a transaction
-      useNotificationStore.getState().checkFinanceNotifications(get().transactions)
+      try {
+        useNotificationStore.getState().checkFinanceNotifications(get().transactions)
+      } catch (notificationError) {
+        console.error('Error checking finance notifications:', notificationError)
+      }
     } catch (error: any) {
-      console.error('Error deleting transaction:', error)
-      set({ error: 'Failed to delete transaction', isLoading: false })
+      console.error('Error deleting transaction:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
+      set({ 
+        error: `Failed to delete transaction: ${error.response?.data?.message || error.message}`, 
+        isLoading: false 
+      })
       throw error
+    }
+  },
+
+  fetchStats: async (startDate: Date, endDate: Date) => {
+    try {
+      set({ isLoading: true, error: null })
+      const stats = await FinanceAPI.getStats(startDate, endDate)
+      set({ stats, isLoading: false, error: null })
+    } catch (error: any) {
+      console.error('Error fetching finance stats:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
+      set({ 
+        error: `Failed to fetch finance stats: ${error.response?.data?.message || error.message}`, 
+        isLoading: false,
+        stats: null
+      })
     }
   },
 

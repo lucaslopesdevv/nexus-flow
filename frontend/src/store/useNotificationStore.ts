@@ -164,7 +164,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
         message: `Your expenses (${expenses.toFixed(2)}) are ${(expenseRatio * 100).toFixed(0)}% of your income (${income.toFixed(2)})`,
         type: 'critical',
         category: 'finance',
-        link: '/finances',
+        link: '/finance',
       })
     }
     // Warning: Expenses are over 75% of income
@@ -175,7 +175,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
         message: `Your expenses are reaching ${(expenseRatio * 100).toFixed(0)}% of your income`,
         type: 'warning',
         category: 'finance',
-        link: '/finances',
+        link: '/finance',
       })
     }
 
@@ -191,7 +191,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
         message: `A large expense of ${largeExpenses.amount.toFixed(2)} was added for ${largeExpenses.category}`,
         type: 'info',
         category: 'finance',
-        link: '/finances',
+        link: '/finance',
       })
     }
   },

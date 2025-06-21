@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Edit, Trash2, ListTodo, Loader2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { 
+import {
   DragDropContext, 
   Droppable, 
   Draggable, 
@@ -15,6 +15,7 @@ import {
   DraggableStateSnapshot 
 } from '@hello-pangea/dnd'
 import type { Task } from '../lib/schemas'
+import { format } from 'date-fns'
 
 const COLUMNS = [
   { id: 'TODO', label: 'To Do' },
@@ -107,7 +108,7 @@ export default function TaskKanban() {
             <Link to="/tasks">
               Create Task
             </Link>
-          </Button>
+                </Button>
         </div>
       </div>
 
@@ -147,7 +148,7 @@ export default function TaskKanban() {
                                 ...provided.draggableProps.style,
                                 opacity: snapshot.isDragging ? 0.8 : 1
                               }}
-                            >
+          >
                               <Card>
                                 <CardHeader className="space-y-0 p-4">
                                   <div className="flex items-start justify-between space-y-0">
@@ -168,47 +169,41 @@ export default function TaskKanban() {
                                         size="icon" 
                                         className="h-8 w-8 text-destructive"
                                         onClick={() => deleteTask(task.id)}
-                                      >
+                >
                                         <Trash2 className="h-4 w-4" />
                                       </Button>
                                     </div>
                                   </div>
                                 </CardHeader>
                                 <CardContent className="p-4 pt-0">
-                                  <p className="text-sm text-muted-foreground">
-                                    {task.description}
-                                  </p>
+                    <p className="text-sm text-muted-foreground">
+                      {task.description}
+                    </p>
                                   <div className="mt-4 flex items-center gap-2">
-                                    <span 
+                      <span
                                       className={`rounded px-2 py-1 text-xs font-medium ${getPriorityColor(task.priority)}`}
-                                    >
-                                      {task.priority}
-                                    </span>
+                      >
+                        {task.priority}
+                      </span>
                                     {task.dueDate && (
                                       <span className="rounded px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800">
-                                        Due: {task.dueDate.toLocaleDateString(undefined, { 
-                                          year: 'numeric', 
-                                          month: 'short', 
-                                          day: 'numeric',
-                                          hour: '2-digit',
-                                          minute: '2-digit'
-                                        })}
+                                        Due: {format(new Date(task.dueDate), 'PPp')}
                                       </span>
                                     )}
                                   </div>
                                 </CardContent>
                               </Card>
-                            </div>
+                    </div>
                           )}
                         </Draggable>
                       ))}
                     {provided.placeholder}
-                  </div>
-                )}
+                </div>
+              )}
               </Droppable>
-            </div>
-          ))}
-        </div>
+          </div>
+        ))}
+      </div>
       </DragDropContext>
     </div>
   )

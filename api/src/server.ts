@@ -44,7 +44,7 @@ server.register(swaggerUi, {
 server.register(taskRoutes, { prefix: '/api/tasks' })
 server.register(inventoryRoutes, { prefix: '/api/inventory' })
 server.register(focusRoutes, { prefix: '/api/focus' })
-server.register(financeRoutes, { prefix: '/api/finances' })
+server.register(financeRoutes, { prefix: '/api/finance' })
 
 // Register error handler
 server.setErrorHandler(errorHandler)
@@ -54,8 +54,9 @@ const start = async () => {
   try {
     await server.listen({ 
       port: env.PORT, 
-      host: env.HOST 
+      host: '0.0.0.0' 
     })
+    console.log(`Server is running on http://localhost:${env.PORT}`)
   } catch (err) {
     server.log.error(err)
     process.exit(1)

@@ -1,81 +1,117 @@
 import { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import { prisma } from '../config/database';
+import { Type } from '@sinclair/typebox';
+import { FinanceService } from '@/services/finance.service';
+import { TransactionType, TransactionCategory } from '@prisma/client';
 
-const financeSchema = z.object({
-  type: z.enum(['income', 'expense']),
-  category: z.enum([
-    'salary',
-    'investment',
-    'other_income',
-    'food',
-    'transportation',
-    'utilities',
-    'entertainment',
-    'shopping',
-    'healthcare',
-    'other_expense',
+const financeService = new FinanceService();
+
+const TransactionSchema = Type.Object({
+  type: Type.Union([Type.Literal('income'), Type.Literal('expense')]),
+  amount: Type.Number(),
+  category: Type.Union([
+    Type.Literal('salary'),
+    Type.Literal('investment'),
+    Type.Literal('other_income'),
+    Type.Literal('food'),
+    Type.Literal('transportation'),
+    Type.Literal('utilities'),
+    Type.Literal('entertainment'),
+    Type.Literal('shopping'),
+    Type.Literal('healthcare'),
+    Type.Literal('other_expense')
   ]),
-  amount: z.number(),
-  description: z.string(),
-  date: z.date(),
+  description: Type.Optional(Type.String()),
+  date: Type.String({ format: 'date-time' })
 });
 
-export async function financeRoutes(fastify: FastifyInstance) {
+const DateRangeSchema = Type.Object({
+  startDate: Type.String({ format: 'date-time' }),
+  endDate: Type.String({ format: 'date-time' })
+});
+
+export const financeRoutes = async function(app: FastifyInstance) {
   // Get all transactions
-  fastify.get('/', async (request, reply) => {
-    try {
-      const transactions = await prisma.transaction.findMany({
-        orderBy: { date: 'desc' },
-      });
-      return transactions;
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-      return reply.status(500).send({ error: 'Failed to fetch transactions' });
-    }
+  app.get('/', async () => {
+    return await financeService.findAll();
   });
 
-  // Create a new transaction
-  fastify.post('/', async (request, reply) => {
-    try {
-      const data = financeSchema.parse(request.body);
-      const transaction = await prisma.transaction.create({
-        data,
-      });
-      return reply.status(201).send(transaction);
-    } catch (error) {
-      console.error('Error creating transaction:', error);
-      return reply.status(400).send({ error: 'Failed to create transaction' });
+  // Get transaction by id
+  app.get('/:id', {
+    schema: {
+      params: Type.Object({
+        id: Type.String()
+      })
     }
+  }, async (request) => {
+    const { id } = request.params as { id: string };
+    return await financeService.findById(id);
   });
 
-  // Update a transaction
-  fastify.patch('/:id', async (request, reply) => {
-    try {
-      const { id } = request.params as { id: string };
-      const data = financeSchema.partial().parse(request.body);
-      const transaction = await prisma.transaction.update({
-        where: { id },
-        data,
-      });
-      return transaction;
-    } catch (error) {
-      console.error('Error updating transaction:', error);
-      return reply.status(400).send({ error: 'Failed to update transaction' });
+  // Create transaction
+  app.post('/', {
+    schema: {
+      body: TransactionSchema
     }
+  }, async (request) => {
+    const data = request.body as {
+      type: TransactionType;
+      amount: number;
+      category: TransactionCategory;
+      description?: string;
+      date: string;
+    };
+
+    return await financeService.create(data);
   });
 
-  // Delete a transaction
-  fastify.delete('/:id', async (request, reply) => {
-    try {
-      const { id } = request.params as { id: string };
-      await prisma.transaction.delete({
-        where: { id },
-      });
-      return reply.status(204).send();
-    } catch (error) {
-      console.error('Error deleting transaction:', error);
-      return reply.status(400).send({ error: 'Failed to delete transaction' });
+  // Update transaction
+  app.put('/:id', {
+    schema: {
+      params: Type.Object({
+        id: Type.String()
+      }),
+      body: Type.Partial(TransactionSchema)
     }
+  }, async (request) => {
+    const { id } = request.params as { id: string };
+    const data = request.body as Partial<{
+      type: TransactionType;
+      amount: number;
+      category: TransactionCategory;
+      description?: string;
+      date: string;
+    }>;
+
+    return await financeService.update(id, data);
+  });
+
+  // Delete transaction
+  app.delete('/:id', {
+    schema: {
+      params: Type.Object({
+        id: Type.String()
+      })
+    }
+  }, async (request) => {
+    const { id } = request.params as { id: string };
+    await financeService.delete(id);
+    return { success: true };
+  });
+
+  // Get finance stats
+  app.post('/stats', {
+    schema: {
+      body: DateRangeSchema
+    }
+  }, async (request) => {
+    const { startDate, endDate } = request.body as {
+      startDate: string;
+      endDate: string;
+    };
+
+    return await financeService.getStats(
+      new Date(startDate),
+      new Date(endDate)
+    );
   });
 } 

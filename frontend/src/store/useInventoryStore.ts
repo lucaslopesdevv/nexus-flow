@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { inventoryApi } from '../lib/api'
+import { InventoryAPI } from '../lib/api'
 import type { Inventory, CreateInventory, UpdateInventory } from '../lib/schemas'
 
 interface InventoryStore {
@@ -40,7 +40,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
   fetchInventory: async () => {
     try {
       set({ isLoading: true, error: null })
-      const inventory = await inventoryApi.getAll()
+      const inventory = await InventoryAPI.getAll()
       set({ inventory, filteredInventory: inventory, isLoading: false })
     } catch (error: any) {
       console.error('Error fetching inventory:', {
@@ -60,7 +60,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
     try {
       set({ isLoading: true, error: null })
       console.log('Creating inventory item:', data)
-      const newItem = await inventoryApi.create(data)
+      const newItem = await InventoryAPI.create(data)
       console.log('Item created:', newItem)
       set((state) => {
         const inventory = [...state.inventory, newItem]
@@ -88,7 +88,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
     try {
       set({ isLoading: true, error: null })
       console.log('Updating inventory item:', { id, data })
-      const updatedItem = await inventoryApi.update(id, data)
+      const updatedItem = await InventoryAPI.update(id, data)
       console.log('Item updated:', updatedItem)
       set((state) => {
         const inventory = state.inventory.map((item) => (item.id === id ? updatedItem : item))
@@ -115,7 +115,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
     try {
       set({ isLoading: true, error: null })
       console.log('Deleting inventory item:', id)
-      await inventoryApi.delete(id)
+      await InventoryAPI.delete(id)
       console.log('Item deleted:', id)
       set((state) => {
         const inventory = state.inventory.filter((item) => item.id !== id)

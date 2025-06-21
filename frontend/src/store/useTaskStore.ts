@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { taskApi } from '../lib/api'
+import { TaskAPI } from '../lib/api'
 import type { Task, CreateTask, UpdateTask } from '../lib/schemas'
 import { useNotificationStore } from './useNotificationStore'
 
@@ -37,7 +37,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   fetchTasks: async () => {
     try {
       set({ isLoading: true, error: null })
-      const tasks = await taskApi.getAll()
+      const tasks = await TaskAPI.getAll()
       set({ 
         tasks, 
         filteredTasks: tasks,
@@ -54,7 +54,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   createTask: async (task) => {
     try {
       set({ error: null })
-      const newTask = await taskApi.create(task)
+      const newTask = await TaskAPI.create(task)
       const updatedTasks = [...get().tasks, newTask]
       set((state) => ({ 
         tasks: updatedTasks,
@@ -77,7 +77,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   updateTask: async (id, task) => {
     try {
       set({ error: null })
-      const updatedTask = await taskApi.update(id, task)
+      const updatedTask = await TaskAPI.update(id, task)
       const updatedTasks = get().tasks.map((t) => (t.id === id ? updatedTask : t))
       set((state) => ({
         tasks: updatedTasks,
@@ -100,7 +100,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   deleteTask: async (id) => {
     try {
       set({ error: null })
-      await taskApi.delete(id)
+      await TaskAPI.delete(id)
       const updatedTasks = get().tasks.filter(t => t.id !== id)
       set((state) => ({ 
         tasks: updatedTasks,
