@@ -1,0 +1,35 @@
+# Railway Dockerfile for API
+FROM node:20-alpine AS base
+WORKDIR /app
+
+# Install dependencies
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+COPY api/package*.json ./
+RUN npm install --frozen-lockfile
+
+# Development/Production stage
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy dependencies
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy API source code
+COPY api/ ./
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nodejs
+
+USER nodejs
+
+EXPOSE 3001
+
+# Start production server
+CMD ["npm", "run", "start"] 

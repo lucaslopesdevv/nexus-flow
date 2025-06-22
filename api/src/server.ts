@@ -40,6 +40,11 @@ server.register(swaggerUi, {
   routePrefix: '/documentation'
 })
 
+// Health check endpoint
+server.get('/health', async (request, reply) => {
+  return { status: 'ok', timestamp: new Date().toISOString() }
+})
+
 // Register routes
 server.register(taskRoutes, { prefix: '/api/tasks' })
 server.register(inventoryRoutes, { prefix: '/api/inventory' })
